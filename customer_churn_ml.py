@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
 from sklearn.linear_model import LogisticRegression
@@ -595,3 +597,86 @@ print(rf_importance_df.head(15))
 print("\n==================================================")
 print("CUSTOMER CHURN ML PROJECT COMPLETE")
 print("==================================================")
+
+
+# ==========================================================
+# STEP 10A: CROSS-VALIDATION
+# ==========================================================
+
+print("\n==================================================")
+print("CROSS-VALIDATION")
+print("==================================================")
+
+
+# Use the Random Forest pipeline from the models dictionary
+rf_cv_pipeline = Pipeline([
+    ("preprocessor", preprocessor),
+    (
+        "model",
+        RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        )
+    )
+])
+
+
+cv_scores = cross_val_score(
+    rf_cv_pipeline,
+    X_train,
+    y_train,
+    cv=5,
+    scoring="accuracy",
+    n_jobs=-1
+)
+
+
+print("Cross-Validation Scores:")
+print(cv_scores)
+
+print("\nMean Cross-Validation Accuracy:")
+print(cv_scores.mean())
+
+# ==========================================================
+# STEP 12A: RANDOMIZED SEARCH CV - RANDOM FOREST
+# ==========================================================
+
+rf_random_params = {
+    "model__n_estimators": [50, 75, 100, 125, 150, 200],
+    "model__max_depth": [3, 5, 7, 10, None],
+    "model__min_samples_split": [2, 4, 6, 8, 10],
+    "model__min_samples_leaf": [1, 2, 3, 4]
+}
+
+rf_random = RandomizedSearchCV(
+    rf_pipeline,
+    param_distributions=rf_random_params,
+    n_iter=10,
+    cv=5,
+    scoring="f1",
+    random_state=42,
+    n_jobs=-1
+)
+
+# IMPORTANT: TRAIN RANDOMIZED SEARCH
+rf_random.fit(X_train, y_train)
+
+print("\n===== RANDOMIZED SEARCH RESULTS =====")
+
+print("Best Parameters:")
+print(rf_random.best_params_)
+
+print("\nBest Cross-Validation F1 Score:")
+print(rf_random.best_score_)
+
+best_rf_random = rf_random.best_estimator_
+
+y_pred_best_rf_random = best_rf_random.predict(X_test)
+
+random_test_accuracy = accuracy_score(
+    y_test,
+    y_pred_best_rf_random
+)
+
+print("\nRandomizedSearchCV Test Accuracy:")
+print(random_test_accuracy)
