@@ -3,18 +3,26 @@ import pandas as pd
 import joblib
 import pickle
 
+from sklearn.model_selection import (
+    train_test_split,
+    GridSearchCV,
+    cross_val_score,
+    RandomizedSearchCV
+)
 
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
+
 from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    GradientBoostingClassifier
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 
@@ -499,112 +507,7 @@ print(
 
 
 # ==========================================================
-# STEP 13: FINAL MODEL COMPARISON
-# ==========================================================
-
-results_df = pd.DataFrame(results)
-
-results_df = results_df.sort_values(
-    by="F1 Score",
-    ascending=False
-)
-
-print("\n==================================================")
-print("FINAL MODEL COMPARISON")
-print("==================================================")
-
-print(
-    results_df.to_string(index=False)
-)
-
-
-# ==========================================================
-# STEP 14: BEST MODEL
-# ==========================================================
-
-best_model_name = results_df.iloc[0]["Model"]
-
-print("\n==================================================")
-print("BEST MODEL")
-print("==================================================")
-
-print(
-    "Best model based on F1 Score:",
-    best_model_name
-)
-
-
-# ==========================================================
-# STEP 15: DECISION TREE FEATURE IMPORTANCE
-# ==========================================================
-
-print("\n==================================================")
-print("DECISION TREE FEATURE IMPORTANCE")
-print("==================================================")
-
-
-dt_model = best_dt.named_steps["model"]
-
-feature_names = (
-    best_dt
-    .named_steps["preprocessor"]
-    .get_feature_names_out()
-)
-
-importance_df = pd.DataFrame({
-    "Feature": feature_names,
-    "Importance": dt_model.feature_importances_
-})
-
-importance_df = importance_df.sort_values(
-    by="Importance",
-    ascending=False
-)
-
-print(importance_df.head(15))
-
-
-# ==========================================================
-# STEP 16: RANDOM FOREST FEATURE IMPORTANCE
-# ==========================================================
-
-print("\n==================================================")
-print("RANDOM FOREST FEATURE IMPORTANCE")
-print("==================================================")
-
-
-rf_model = best_rf.named_steps["model"]
-
-rf_feature_names = (
-    best_rf
-    .named_steps["preprocessor"]
-    .get_feature_names_out()
-)
-
-rf_importance_df = pd.DataFrame({
-    "Feature": rf_feature_names,
-    "Importance": rf_model.feature_importances_
-})
-
-rf_importance_df = rf_importance_df.sort_values(
-    by="Importance",
-    ascending=False
-)
-
-print(rf_importance_df.head(15))
-
-
-# ==========================================================
-# PROJECT COMPLETE
-# ==========================================================
-
-print("\n==================================================")
-print("CUSTOMER CHURN ML PROJECT COMPLETE")
-print("==================================================")
-
-
-# ==========================================================
-# STEP 10A: CROSS-VALIDATION
+# STEP 13: CROSS-VALIDATION
 # ==========================================================
 
 print("\n==================================================")
@@ -612,7 +515,6 @@ print("CROSS-VALIDATION")
 print("==================================================")
 
 
-# Use the Random Forest pipeline from the models dictionary
 rf_cv_pipeline = Pipeline([
     ("preprocessor", preprocessor),
     (
@@ -641,9 +543,15 @@ print(cv_scores)
 print("\nMean Cross-Validation Accuracy:")
 print(cv_scores.mean())
 
+
 # ==========================================================
-# STEP 12A: RANDOMIZED SEARCH CV - RANDOM FOREST
+# STEP 14: RANDOMIZED SEARCH CV
 # ==========================================================
+
+print("\n==================================================")
+print("RANDOMIZED SEARCH CV - RANDOM FOREST")
+print("==================================================")
+
 
 rf_random_params = {
     "model__n_estimators": [50, 75, 100, 125, 150, 200],
@@ -651,6 +559,7 @@ rf_random_params = {
     "model__min_samples_split": [2, 4, 6, 8, 10],
     "model__min_samples_leaf": [1, 2, 3, 4]
 }
+
 
 rf_random = RandomizedSearchCV(
     rf_pipeline,
@@ -662,12 +571,10 @@ rf_random = RandomizedSearchCV(
     n_jobs=-1
 )
 
-# IMPORTANT: TRAIN RANDOMIZED SEARCH
+
 rf_random.fit(X_train, y_train)
 
-print("\n===== RANDOMIZED SEARCH RESULTS =====")
-
-print("Best Parameters:")
+print("\nBest Parameters:")
 print(rf_random.best_params_)
 
 print("\nBest Cross-Validation F1 Score:")
@@ -685,8 +592,111 @@ random_test_accuracy = accuracy_score(
 print("\nRandomizedSearchCV Test Accuracy:")
 print(random_test_accuracy)
 
+
 # ==========================================================
-# STEP 17: HANDLING IMBALANCED DATA - CLASS WEIGHTS
+# STEP 15: FINAL MODEL COMPARISON
+# ==========================================================
+
+results_df = pd.DataFrame(results)
+
+results_df = results_df.sort_values(
+    by="F1 Score",
+    ascending=False
+)
+
+print("\n==================================================")
+print("FINAL MODEL COMPARISON")
+print("==================================================")
+
+print(
+    results_df.to_string(index=False)
+)
+
+
+# ==========================================================
+# STEP 16: BEST MODEL
+# ==========================================================
+
+best_model_name = results_df.iloc[0]["Model"]
+
+print("\n==================================================")
+print("BEST MODEL")
+print("==================================================")
+
+print(
+    "Best model based on F1 Score:",
+    best_model_name
+)
+
+
+# ==========================================================
+# STEP 17: DECISION TREE FEATURE IMPORTANCE
+# ==========================================================
+
+print("\n==================================================")
+print("DECISION TREE FEATURE IMPORTANCE")
+print("==================================================")
+
+
+dt_model = best_dt.named_steps["model"]
+
+feature_names = (
+    best_dt
+    .named_steps["preprocessor"]
+    .get_feature_names_out()
+)
+
+
+importance_df = pd.DataFrame({
+    "Feature": feature_names,
+    "Importance": dt_model.feature_importances_
+})
+
+
+importance_df = importance_df.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+
+print(importance_df.head(15))
+
+
+# ==========================================================
+# STEP 18: RANDOM FOREST FEATURE IMPORTANCE
+# ==========================================================
+
+print("\n==================================================")
+print("RANDOM FOREST FEATURE IMPORTANCE")
+print("==================================================")
+
+
+rf_model = best_rf.named_steps["model"]
+
+rf_feature_names = (
+    best_rf
+    .named_steps["preprocessor"]
+    .get_feature_names_out()
+)
+
+
+rf_importance_df = pd.DataFrame({
+    "Feature": rf_feature_names,
+    "Importance": rf_model.feature_importances_
+})
+
+
+rf_importance_df = rf_importance_df.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+
+print(rf_importance_df.head(15))
+
+
+# ==========================================================
+# STEP 19: HANDLING IMBALANCED DATA - CLASS WEIGHTS
 # ==========================================================
 
 print("\n==================================================")
@@ -769,8 +779,9 @@ print("Precision:", balanced_precision)
 print("Recall:", balanced_recall)
 print("F1 Score:", balanced_f1)
 
+
 # ==========================================================
-# STEP 18: HANDLING IMBALANCED DATA - SMOTE
+# STEP 20: HANDLING IMBALANCED DATA - SMOTE
 # ==========================================================
 
 print("\n==================================================")
@@ -855,7 +866,7 @@ print("F1 Score:", smote_f1)
 
 
 # ==========================================================
-# STEP 19: MODEL PERSISTENCE - JOBLIB
+# STEP 21: MODEL PERSISTENCE - JOBLIB
 # ==========================================================
 
 print("\n==================================================")
@@ -863,40 +874,42 @@ print("MODEL PERSISTENCE - JOBLIB")
 print("==================================================")
 
 
-# Save the SMOTE Random Forest pipeline
 joblib.dump(
     rf_smote_pipeline,
     "churn_model.joblib"
 )
 
+
 print("\nModel saved successfully as churn_model.joblib")
 
 
 # ==========================================================
-# LOAD SAVED MODEL
+# LOAD JOBLIB MODEL
 # ==========================================================
 
 loaded_model = joblib.load(
     "churn_model.joblib"
 )
 
+
 print("Model loaded successfully!")
 
 
 # ==========================================================
-# PREDICTION USING LOADED MODEL
+# PREDICTION USING LOADED JOBLIB MODEL
 # ==========================================================
 
 loaded_predictions = loaded_model.predict(
     X_test
 )
 
+
 print("\nPredictions from loaded model:")
 print(loaded_predictions[:10])
 
 
 # ==========================================================
-# VERIFY LOADED MODEL
+# VERIFY LOADED JOBLIB MODEL
 # ==========================================================
 
 loaded_accuracy = accuracy_score(
@@ -910,14 +923,16 @@ loaded_f1 = f1_score(
     zero_division=0
 )
 
+
 print("\nLoaded Model Accuracy:")
 print(loaded_accuracy)
 
 print("\nLoaded Model F1 Score:")
 print(loaded_f1)
 
+
 # ==========================================================
-# MODEL PERSISTENCE - PICKLE
+# STEP 22: MODEL PERSISTENCE - PICKLE
 # ==========================================================
 
 print("\n==================================================")
@@ -927,7 +942,11 @@ print("==================================================")
 
 # Save the model
 with open("churn_model.pkl", "wb") as file:
-    pickle.dump(rf_smote_pipeline, file)
+    pickle.dump(
+        rf_smote_pipeline,
+        file
+    )
+
 
 print("\nModel saved successfully as churn_model.pkl")
 
@@ -939,6 +958,7 @@ print("\nModel saved successfully as churn_model.pkl")
 with open("churn_model.pkl", "rb") as file:
     pickle_model = pickle.load(file)
 
+
 print("Pickle model loaded successfully!")
 
 
@@ -946,7 +966,10 @@ print("Pickle model loaded successfully!")
 # PREDICTION USING PICKLE MODEL
 # ==========================================================
 
-pickle_predictions = pickle_model.predict(X_test)
+pickle_predictions = pickle_model.predict(
+    X_test
+)
+
 
 print("\nPredictions from Pickle model:")
 print(pickle_predictions[:10])
@@ -967,8 +990,31 @@ pickle_f1 = f1_score(
     zero_division=0
 )
 
+
 print("\nPickle Model Accuracy:")
 print(pickle_accuracy)
 
 print("\nPickle Model F1 Score:")
 print(pickle_f1)
+
+
+# ==========================================================
+# PROJECT COMPLETE
+# ==========================================================
+
+print("\n==================================================")
+print("CUSTOMER CHURN ML PROJECT COMPLETE")
+print("==================================================")
+
+print("\nCompleted Topics:")
+print("1. Data Preprocessing")
+print("2. Classification Models")
+print("3. Model Evaluation")
+print("4. Cross-Validation")
+print("5. GridSearchCV")
+print("6. RandomizedSearchCV")
+print("7. Feature Importance")
+print("8. Class Weights")
+print("9. SMOTE")
+print("10. Joblib Model Persistence")
+print("11. Pickle Model Persistence")
