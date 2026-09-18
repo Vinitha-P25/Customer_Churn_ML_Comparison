@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import joblib
+import pickle
+
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.model_selection import cross_val_score
@@ -7,7 +10,8 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-
+from imblearn.pipeline import Pipeline as ImbPipeline
+from imblearn.over_sampling import SMOTE
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -680,3 +684,291 @@ random_test_accuracy = accuracy_score(
 
 print("\nRandomizedSearchCV Test Accuracy:")
 print(random_test_accuracy)
+
+# ==========================================================
+# STEP 17: HANDLING IMBALANCED DATA - CLASS WEIGHTS
+# ==========================================================
+
+print("\n==================================================")
+print("CLASS WEIGHT - RANDOM FOREST")
+print("==================================================")
+
+
+rf_balanced_pipeline = Pipeline([
+    ("preprocessor", preprocessor),
+    (
+        "model",
+        RandomForestClassifier(
+            n_estimators=100,
+            class_weight="balanced",
+            random_state=42
+        )
+    )
+])
+
+
+rf_balanced_pipeline.fit(
+    X_train,
+    y_train
+)
+
+
+y_pred_balanced = rf_balanced_pipeline.predict(
+    X_test
+)
+
+
+print("\nClassification Report - Balanced Random Forest:")
+
+print(
+    classification_report(
+        y_test,
+        y_pred_balanced,
+        zero_division=0
+    )
+)
+
+
+print("\nConfusion Matrix - Balanced Random Forest:")
+
+print(
+    confusion_matrix(
+        y_test,
+        y_pred_balanced
+    )
+)
+
+
+balanced_accuracy = accuracy_score(
+    y_test,
+    y_pred_balanced
+)
+
+balanced_precision = precision_score(
+    y_test,
+    y_pred_balanced,
+    zero_division=0
+)
+
+balanced_recall = recall_score(
+    y_test,
+    y_pred_balanced,
+    zero_division=0
+)
+
+balanced_f1 = f1_score(
+    y_test,
+    y_pred_balanced,
+    zero_division=0
+)
+
+
+print("\nBalanced Random Forest Metrics:")
+print("Accuracy:", balanced_accuracy)
+print("Precision:", balanced_precision)
+print("Recall:", balanced_recall)
+print("F1 Score:", balanced_f1)
+
+# ==========================================================
+# STEP 18: HANDLING IMBALANCED DATA - SMOTE
+# ==========================================================
+
+print("\n==================================================")
+print("SMOTE - RANDOM FOREST")
+print("==================================================")
+
+
+rf_smote_pipeline = ImbPipeline([
+    ("preprocessor", preprocessor),
+    ("smote", SMOTE(random_state=42)),
+    (
+        "model",
+        RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        )
+    )
+])
+
+
+rf_smote_pipeline.fit(
+    X_train,
+    y_train
+)
+
+
+y_pred_smote = rf_smote_pipeline.predict(
+    X_test
+)
+
+
+print("\nClassification Report - SMOTE Random Forest:")
+
+print(
+    classification_report(
+        y_test,
+        y_pred_smote,
+        zero_division=0
+    )
+)
+
+
+print("\nConfusion Matrix - SMOTE Random Forest:")
+
+print(
+    confusion_matrix(
+        y_test,
+        y_pred_smote
+    )
+)
+
+
+smote_accuracy = accuracy_score(
+    y_test,
+    y_pred_smote
+)
+
+smote_precision = precision_score(
+    y_test,
+    y_pred_smote,
+    zero_division=0
+)
+
+smote_recall = recall_score(
+    y_test,
+    y_pred_smote,
+    zero_division=0
+)
+
+smote_f1 = f1_score(
+    y_test,
+    y_pred_smote,
+    zero_division=0
+)
+
+
+print("\nSMOTE Random Forest Metrics:")
+print("Accuracy:", smote_accuracy)
+print("Precision:", smote_precision)
+print("Recall:", smote_recall)
+print("F1 Score:", smote_f1)
+
+
+# ==========================================================
+# STEP 19: MODEL PERSISTENCE - JOBLIB
+# ==========================================================
+
+print("\n==================================================")
+print("MODEL PERSISTENCE - JOBLIB")
+print("==================================================")
+
+
+# Save the SMOTE Random Forest pipeline
+joblib.dump(
+    rf_smote_pipeline,
+    "churn_model.joblib"
+)
+
+print("\nModel saved successfully as churn_model.joblib")
+
+
+# ==========================================================
+# LOAD SAVED MODEL
+# ==========================================================
+
+loaded_model = joblib.load(
+    "churn_model.joblib"
+)
+
+print("Model loaded successfully!")
+
+
+# ==========================================================
+# PREDICTION USING LOADED MODEL
+# ==========================================================
+
+loaded_predictions = loaded_model.predict(
+    X_test
+)
+
+print("\nPredictions from loaded model:")
+print(loaded_predictions[:10])
+
+
+# ==========================================================
+# VERIFY LOADED MODEL
+# ==========================================================
+
+loaded_accuracy = accuracy_score(
+    y_test,
+    loaded_predictions
+)
+
+loaded_f1 = f1_score(
+    y_test,
+    loaded_predictions,
+    zero_division=0
+)
+
+print("\nLoaded Model Accuracy:")
+print(loaded_accuracy)
+
+print("\nLoaded Model F1 Score:")
+print(loaded_f1)
+
+# ==========================================================
+# MODEL PERSISTENCE - PICKLE
+# ==========================================================
+
+print("\n==================================================")
+print("MODEL PERSISTENCE - PICKLE")
+print("==================================================")
+
+
+# Save the model
+with open("churn_model.pkl", "wb") as file:
+    pickle.dump(rf_smote_pipeline, file)
+
+print("\nModel saved successfully as churn_model.pkl")
+
+
+# ==========================================================
+# LOAD PICKLE MODEL
+# ==========================================================
+
+with open("churn_model.pkl", "rb") as file:
+    pickle_model = pickle.load(file)
+
+print("Pickle model loaded successfully!")
+
+
+# ==========================================================
+# PREDICTION USING PICKLE MODEL
+# ==========================================================
+
+pickle_predictions = pickle_model.predict(X_test)
+
+print("\nPredictions from Pickle model:")
+print(pickle_predictions[:10])
+
+
+# ==========================================================
+# VERIFY PICKLE MODEL
+# ==========================================================
+
+pickle_accuracy = accuracy_score(
+    y_test,
+    pickle_predictions
+)
+
+pickle_f1 = f1_score(
+    y_test,
+    pickle_predictions,
+    zero_division=0
+)
+
+print("\nPickle Model Accuracy:")
+print(pickle_accuracy)
+
+print("\nPickle Model F1 Score:")
+print(pickle_f1)

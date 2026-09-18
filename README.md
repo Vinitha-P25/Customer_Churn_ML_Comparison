@@ -175,9 +175,7 @@ Customer_Churn_ML_Comparison/
 
 Clone the repository and run:
 
-```bash
 python customer_churn_ml.py
-```
 
 The program generates the dataset, performs preprocessing, trains the models, evaluates them, performs cross-validation and hyperparameter tuning, and displays the final results.
 
